@@ -21,6 +21,11 @@ UPDATE dish SET selling_price = 3500.00 WHERE id = 1;
 UPDATE dish SET selling_price = 12000.00 WHERE id = 2;
 UPDATE dish SET selling_price = 8000.00 WHERE id = 4;
 
-SELECT dish.name, DishIngredient.quantity_required
+SELECT
+    dish.name AS plat,
+    ingredient.name AS ingredient,
+    DishIngredient.quantity_required,
+    DishIngredient.unit
 FROM dish
-         JOIN DishIngredient ON dish.id = DishIngredient.id_dish;
+         JOIN DishIngredient ON dish.id = DishIngredient.id_dish
+         JOIN ingredient ON DishIngredient.id_ingredient = ingredient.id;
