@@ -8,3 +8,6 @@ CREATE TABLE DishIngredient (
 );
 ALTER TABLE dish ADD COLUMN selling_price NUMERIC(10, 2);
 ALTER TABLE ingredient DROP COLUMN id_dish;
+
+INSERT INTO DishIngredient (id_dish, id_ingredient, quantity_required, unit)
+VALUES (1, 2, 0.15, 'KG');
