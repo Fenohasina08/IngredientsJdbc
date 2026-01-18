@@ -1,3 +1,4 @@
+
 CREATE TYPE unit_type AS ENUM ('PCS','KG', 'L');
 CREATE TABLE DishIngredient (
                                 id SERIAL PRIMARY KEY,
@@ -19,3 +20,7 @@ INSERT INTO DishIngredient (id_dish, id_ingredient, quantity_required, unit) VAL
 UPDATE dish SET selling_price = 3500.00 WHERE id = 1;
 UPDATE dish SET selling_price = 12000.00 WHERE id = 2;
 UPDATE dish SET selling_price = 8000.00 WHERE id = 4;
+
+SELECT dish.name, DishIngredient.quantity_required
+FROM dish
+         JOIN DishIngredient ON dish.id = DishIngredient.id_dish;
