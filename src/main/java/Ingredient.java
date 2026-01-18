@@ -7,14 +7,8 @@ public class Ingredient {
     private Double price;
     private Dish dish;
     private Double quantity;
-
-    public Double getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Double quantity) {
-        this.quantity = quantity;
-    }
+    // 1. Ajout de l'unité 📏
+    private UnitEnum unit;
 
     public Ingredient() {
     }
@@ -30,8 +24,21 @@ public class Ingredient {
         this.price = price;
     }
 
-    public String getDishName() {
-        return dish == null ? null : dish.getName();
+    // 2. Ajout du Getter et Setter pour l'unité
+    public UnitEnum getUnit() {
+        return unit;
+    }
+
+    public void setUnit(UnitEnum unit) {
+        this.unit = unit;
+    }
+
+    public Double getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Double quantity) {
+        this.quantity = quantity;
     }
 
     public Integer getId() {
@@ -74,16 +81,25 @@ public class Ingredient {
         this.dish = dish;
     }
 
+    public String getDishName() {
+        return dish == null ? null : dish.getName();
+    }
+
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Ingredient that = (Ingredient) o;
-        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && category == that.category && Objects.equals(price, that.price) && Objects.equals(dish, that.dish);
+        return Objects.equals(id, that.id) &&
+                Objects.equals(name, that.name) &&
+                category == that.category &&
+                Objects.equals(price, that.price) &&
+                unit == that.unit; // Ajout de l'unité dans la comparaison
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, category, price, dish);
+        return Objects.hash(id, name, category, price, unit);
     }
 
     @Override
@@ -93,7 +109,7 @@ public class Ingredient {
                 ", name='" + name + '\'' +
                 ", category=" + category +
                 ", price=" + price +
-                ", dishName=" + getDishName() +
+                ", unit=" + unit + // Ajout dans le toString
                 ", quantity=" + quantity +
                 '}';
     }
