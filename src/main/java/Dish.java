@@ -16,17 +16,6 @@ public class Dish {
         this.price = price;
     }
 
-    public Double getDishCost() {
-        double totalPrice = 0;
-        for (int i = 0; i < ingredients.size(); i++) {
-            Double quantity = ingredients.get(i).getQuantity();
-            if(quantity == null) {
-                throw new RuntimeException("...");
-            }
-            totalPrice = totalPrice + ingredients.get(i).getPrice() * quantity;
-        }
-        return totalPrice;
-    }
 
     public Dish() {
     }
@@ -106,5 +95,23 @@ public class Dish {
             throw new RuntimeException("Price is null");
         }
         return price - getDishCost();
+    }
+    public Double getDishCost() {
+        double totalCost = 0.0;
+
+        if (this.ingredients == null) {
+            return totalCost;
+        }
+
+        for (int i = 0; i < ingredients.size(); i++) {
+            Ingredient current = ingredients.get(i);
+
+            // On remplace le 'null' par 0.0 pour éviter les crashs 🛠️
+            Double unitPrice = (current.getPrice() == null) ? 0.0 : current.getPrice();
+            Double quantity = (current.getQuantity() == null) ? 0.0 : current.getQuantity();
+
+            totalCost += (unitPrice * quantity);
+        }
+        return totalCost;
     }
 }
