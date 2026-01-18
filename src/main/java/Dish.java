@@ -3,20 +3,12 @@ import java.util.Objects;
 
 public class Dish {
     private Integer id;
-    private Double price;
+    private Double price; // Prix de vente du plat 💰
     private String name;
     private DishTypeEnum dishType;
     private List<Ingredient> ingredients;
 
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
-    }
-
-
+    // Constructeurs
     public Dish() {
     }
 
@@ -27,6 +19,48 @@ public class Dish {
         this.ingredients = ingredients;
     }
 
+    /**
+     * Calcule le coût total de revient du plat en fonction des ingrédients.
+     * Utilise 0.0 si le prix ou la quantité d'un ingrédient est absent. 🛠️
+     */
+    public Double getDishCost() {
+        double totalCost = 0.0;
+
+        if (this.ingredients == null) {
+            return totalCost;
+        }
+
+        for (int i = 0; i < ingredients.size(); i++) {
+            Ingredient current = ingredients.get(i);
+
+            // Gestion des valeurs nulles avec l'opérateur ternaire
+            Double unitPrice = (current.getPrice() == null) ? 0.0 : current.getPrice();
+            Double quantity = (current.getQuantity() == null) ? 0.0 : current.getQuantity();
+
+            totalCost += (unitPrice * quantity);
+        }
+        return totalCost;
+    }
+
+    /**
+     * Calcule la marge brute (Prix de vente - Coût de revient).
+     * Lève une exception si le prix de vente est inconnu. ⚠️
+     */
+    public Double getGrossMargin() {
+        if (this.price == null) {
+            throw new RuntimeException("Impossible de calculer la marge : le prix de vente est null pour le plat " + name);
+        }
+        return this.price - getDishCost();
+    }
+
+    // Getters et Setters
+    public Double getPrice() {
+        return price;
+    }
+
+    public void setPrice(Double price) {
+        this.price = price;
+    }
 
     public Integer getId() {
         return id;
@@ -67,11 +101,13 @@ public class Dish {
         this.ingredients = ingredients;
     }
 
+    // Méthodes standards (equals, hashCode, toString)
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Dish dish = (Dish) o;
-        return Objects.equals(id, dish.id) && Objects.equals(name, dish.name) && dishType == dish.dishType && Objects.equals(ingredients, dish.ingredients);
+        return Objects.equals(id, dish.id) && Objects.equals(name, dish.name) &&
+                dishType == dish.dishType && Objects.equals(ingredients, dish.ingredients);
     }
 
     @Override
@@ -88,30 +124,5 @@ public class Dish {
                 ", dishType=" + dishType +
                 ", ingredients=" + ingredients +
                 '}';
-    }
-
-    public Double getGrossMargin() {
-        if (price == null) {
-            throw new RuntimeException("Price is null");
-        }
-        return price - getDishCost();
-    }
-    public Double getDishCost() {
-        double totalCost = 0.0;
-
-        if (this.ingredients == null) {
-            return totalCost;
-        }
-
-        for (int i = 0; i < ingredients.size(); i++) {
-            Ingredient current = ingredients.get(i);
-
-            // On remplace le 'null' par 0.0 pour éviter les crashs 🛠️
-            Double unitPrice = (current.getPrice() == null) ? 0.0 : current.getPrice();
-            Double quantity = (current.getQuantity() == null) ? 0.0 : current.getQuantity();
-
-            totalCost += (unitPrice * quantity);
-        }
-        return totalCost;
     }
 }
