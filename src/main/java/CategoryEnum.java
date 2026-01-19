@@ -1,3 +1,5 @@
 public enum CategoryEnum {
-    VEGETABLE, ANIMAL, MARINE, DAIRY, OTHER
+    VEGETABLE,
+    MEAT,
+    DAIRY
 }
