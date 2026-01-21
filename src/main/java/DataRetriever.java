@@ -54,7 +54,52 @@ public class DataRetriever {
         }
         return ingredients;
     }
+    public Ingredient saveIngredient(Ingredient toSave) {
+        // 1. Sauvegarde/Mise à jour de l'ingrédient
+        String sqlIngredient = "INSERT INTO ingredient (id, name, price, category) VALUES (?, ?, ?, ?::ingredient_category) " +
+                "ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, price = EXCLUDED.price, category = EXCLUDED.category";
 
+        // 2. Sauvegarde des mouvements de stock (avec ON CONFLICT DO NOTHING)
+        String sqlMovement = "INSERT INTO StockMovement (id, id_ingredient, quantity, type, unit, creation_datetime) " +
+                "VALUES (?, ?, ?, ?::mouvement_type, ?::unit_type, ?) " +
+                "ON CONFLICT (id) DO NOTHING"; [cite: 51]
+
+        try (Connection conn = new DBConnection().getConnection()) {
+            conn.setAutoCommit(false); // On utilise une transaction
+            try {
+                // Sauvegarde de l'ingrédient
+                try (PreparedStatement psIng = conn.prepareStatement(sqlIngredient)) {
+                    psIng.setInt(1, toSave.getId());
+                    psIng.setString(2, toSave.getName());
+                    psIng.setDouble(3, toSave.getPrice());
+                    psIng.setString(4, toSave.getCategory().name());
+                    psIng.executeUpdate();
+                }
+
+                // Sauvegarde de la liste des mouvements
+                try (PreparedStatement psMov = conn.prepareStatement(sqlMovement)) {
+                    for (StockMovement mov : toSave.getStockMovementList()) { [cite: 50]
+                        psMov.setInt(1, mov.getId()); [cite: 51]
+                        psMov.setInt(2, toSave.getId());
+                        psMov.setDouble(3, mov.getValue().getQuantity());
+                        psMov.setString(4, mov.getType().name());
+                        psMov.setString(5, mov.getValue().getUnit().name());
+                        psMov.setTimestamp(6, Timestamp.from(mov.getCreationDatetime()));
+                        psMov.addBatch();
+                    }
+                    psMov.executeBatch();
+                }
+
+                conn.commit();
+                return toSave;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw new RuntimeException("Erreur lors de la sauvegarde : " + e.getMessage());
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
     public Dish saveDish(Dish dish) {
         String sql = "INSERT INTO dish (id, name, dish_type, selling_price) VALUES (?, ?, ?::dish_type, ?) " +
                 "ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, selling_price = EXCLUDED.selling_price RETURNING id";
