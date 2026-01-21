@@ -16,17 +16,27 @@ public class Dish {
         this.dishType = dishType;
         this.ingredients = ingredients;
     }
-
     public Double getDishCost() {
         double totalCost = 0.0;
-        if (this.ingredients == null) return totalCost;
 
-        for (Ingredient current : ingredients) {
-            Double unitPrice = (current.getPrice() == null) ? 0.0 : current.getPrice();
-            Double quantity = (current.getQuantity() == null) ? 0.0 : current.getQuantity();
-            // Calcul direct P * Q comme demandé
-            totalCost += (unitPrice * quantity);
+        if (this.ingredients == null) {
+            return totalCost;
         }
+
+        for (DishIngredient di : ingredients) {
+            // Sécurité sur l'objet de liaison
+            if (di == null || di.getIngredient() == null) {
+                continue;
+            }
+
+            // Récupération sécurisée des chiffres
+            Double qte = (di.getQuantity() == null) ? 0.0 : di.getQuantity();
+            Double prix = (di.getIngredient().getPrice() == null) ? 0.0 : di.getIngredient().getPrice();
+
+            // Ajout au total
+            totalCost += (qte * prix);
+        }
+
         return totalCost;
     }
 
