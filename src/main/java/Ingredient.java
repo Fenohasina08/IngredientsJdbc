@@ -5,31 +5,53 @@ import java.util.Objects;
 
 public class Ingredient {
 
-    private int id; // Le sujet utilise désormais 'int'
-    private String name; [cite: 27]
-    private Double price; [cite: 28]
-    private CategoryEnum category; [cite: 29]
+    private Integer id;
+    private String name;
+    private Double price;
+    private CategoryEnum category;
 
-    // Nouvelle liste pour gérer l'historique des stocks
+    // Initialisation de la liste pour éviter les erreurs de type NullPointerException
     private List<StockMovement> stockMovementList = new ArrayList<>();
-
-    public Ingredient() {
+    public Ingredient(int i) {
+        this.id = i;
     }
 
-    public Ingredient(int id, String name, Double price, CategoryEnum category) {
+    // On met à jour celui-là pour que la catégorie soit en 3ème position
+    public Ingredient(Integer id, String name, CategoryEnum category, Double price) {
         this.id = id;
         this.name = name;
-        this.price = price;
-        this.category = category;
+        this.category = category; // On l'assigne ici
+        this.price = price;       // Et le prix à la fin
     }
 
-    // Méthode demandée par le sujet pour calculer le stock à une date T
+    /**
+     * Calcule la valeur du stock à un instant t donné.
+     * @param t L'instant cible pour le calcul
+     * @return Un objet StockValue contenant la quantité totale et l'unité
+     */
     public StockValue getStockValueAt(Instant t) {
-        // Nous coderons la logique de calcul (Entrées - Sorties) ensemble plus tard
-        return null;
+        double totalQuantity = 0.0;
+        // On initialise avec une unité par défaut (ex: G) au cas où la liste est vide
+        UnitEnum currentUnit = UnitEnum.G;
+
+        for (StockMovement mov : stockMovementList) {
+            // Vérifie si le mouvement a eu lieu AVANT ou EXACTEMENT à l'instant t
+            if (!mov.getCreationDatetime().isAfter(t)) {
+                if (mov.getType() == MovementTypeEnum.IN) {
+                    totalQuantity += mov.getValue().getQuantity();
+                } else if (mov.getType() == MovementTypeEnum.OUT) {
+                    totalQuantity -= mov.getValue().getQuantity();
+                }
+                // On met à jour l'unité pour correspondre à celle du dernier mouvement traité
+                currentUnit = mov.getValue().getUnit();
+            }
+        }
+
+        return new StockValue(totalQuantity, currentUnit);
     }
 
-    // Getters et Setters mis à jour
+    // --- Getters et Setters ---
+
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
@@ -67,6 +89,7 @@ public class Ingredient {
                 ", name='" + name + '\'' +
                 ", price=" + price +
                 ", category=" + category +
+                ", movementsCount=" + stockMovementList.size() +
                 '}';
     }
 }

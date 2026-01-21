@@ -37,7 +37,7 @@ public class DataRetriever {
                 ps.setInt(1, dishId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        Ingredient ing = new Ingredient();
+                        Ingredient ing = new Ingredient(1);
                         ing.setId(rs.getInt("id"));
                         ing.setName(rs.getString("name"));
                         ing.setPrice(rs.getDouble("price"));
