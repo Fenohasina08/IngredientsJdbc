@@ -1,94 +1,50 @@
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class Ingredient {
 
-    private Integer id;
-    private String name;
-    private CategoryEnum category;
-    private Double price;
-    private Double quantity;
-    private UnitEnum unit;
-    private Dish dish;
+    private int id; // Le sujet utilise désormais 'int'
+    private String name; [cite: 27]
+    private Double price; [cite: 28]
+    private CategoryEnum category; [cite: 29]
+
+    // Nouvelle liste pour gérer l'historique des stocks
+    private List<StockMovement> stockMovementList = new ArrayList<>();
 
     public Ingredient() {
     }
 
-    public Ingredient(Integer id) {
-        this.id = id;
-    }
-
-    public Ingredient(Integer id, String name, CategoryEnum category, Double price) {
+    public Ingredient(int id, String name, Double price, CategoryEnum category) {
         this.id = id;
         this.name = name;
-        this.category = category;
         this.price = price;
-        this.quantity = 0.0;
-        this.unit = UnitEnum.G;
-    }
-
-    public Ingredient(Integer id, String name, CategoryEnum category, Double price, Double quantity, UnitEnum unit) {
-        this.id = id;
-        this.name = name;
-        this.category = category;
-        this.price = price;
-        this.quantity = quantity;
-        this.unit = unit;
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public CategoryEnum getCategory() {
-        return category;
-    }
-
-    public void setCategory(CategoryEnum category) {
         this.category = category;
     }
 
-    public Double getPrice() {
-        return price;
+    // Méthode demandée par le sujet pour calculer le stock à une date T
+    public StockValue getStockValueAt(Instant t) {
+        // Nous coderons la logique de calcul (Entrées - Sorties) ensemble plus tard
+        return null;
     }
 
-    public void setPrice(Double price) {
-        this.price = price;
-    }
+    // Getters et Setters mis à jour
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public Double getQuantity() {
-        return quantity;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public void setQuantity(Double quantity) {
-        this.quantity = quantity;
-    }
+    public Double getPrice() { return price; }
+    public void setPrice(Double price) { this.price = price; }
 
-    public UnitEnum getUnit() {
-        return unit;
-    }
+    public CategoryEnum getCategory() { return category; }
+    public void setCategory(CategoryEnum category) { this.category = category; }
 
-    public void setUnit(UnitEnum unit) {
-        this.unit = unit;
-    }
-
-    public Dish getDish() {
-        return dish;
-    }
-
-    public void setDish(Dish dish) {
-        this.dish = dish;
+    public List<StockMovement> getStockMovementList() { return stockMovementList; }
+    public void setStockMovementList(List<StockMovement> stockMovementList) {
+        this.stockMovementList = stockMovementList;
     }
 
     @Override
@@ -96,7 +52,7 @@ public class Ingredient {
         if (this == o) return true;
         if (!(o instanceof Ingredient)) return false;
         Ingredient that = (Ingredient) o;
-        return Objects.equals(id, that.id);
+        return id == that.id;
     }
 
     @Override
@@ -109,10 +65,8 @@ public class Ingredient {
         return "Ingredient{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", category=" + category +
                 ", price=" + price +
-                ", quantity=" + quantity +
-                ", unit=" + unit +
+                ", category=" + category +
                 '}';
     }
 }
