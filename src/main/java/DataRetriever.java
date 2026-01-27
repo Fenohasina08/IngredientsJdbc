@@ -20,7 +20,7 @@ public class DataRetriever {
                 dish = new Dish();
                 dish.setId(resultSet.getInt("id"));
                 dish.setName(resultSet.getString("name"));
-                dish.setDishType(DishTypeEnum.valueOf(resultSet.getString("dish_type")));
+                dish.setDishType(DishType.valueOf(resultSet.getString("dish_type")));
                 dish.setPrice(resultSet.getDouble("price"));
                 dish.setIngredients(findDishIngredientByDishId(id));
 
@@ -59,7 +59,7 @@ public class DataRetriever {
        return ingredients;
     }
 
-    public List<Dish> findDishsByIngredientName(String IngredientName){
+    public List<Dish> findDishByIngredientName(String IngredientName){
        List<Dish> dishes = new ArrayList<>();
        DBConnection dbConnection = new DBConnection();
 
@@ -79,7 +79,7 @@ public class DataRetriever {
                Dish dish = new Dish();
                dish.setId(resultSet.getInt("id"));
                dish.setName(resultSet.getString("name"));
-               dish.setDishType(DishTypeEnum.valueOf(resultSet.getString("dish_type")));
+               dish.setDishType(DishType.valueOf(resultSet.getString("dish_type")));
                dish.setPrice(resultSet.getDouble("price"));
                dish.setIngredients(findDishIngredientByDishId(resultSet.getInt("id")));
                dishes.add(dish);
@@ -382,7 +382,54 @@ public class DataRetriever {
         }
     }
 
+    public double getStockValueAt(int ingredientId, Instant t) {
+        DBConnection dbConnection = new DBConnection();
+        String sql = """
+        SELECT SUM(
+            CASE 
+                WHEN type = 'IN' THEN quantity
+                WHEN type = 'OUT' THEN -quantity
+                ELSE 0
+            END
+        ) AS stock
+        FROM stockmovement
+        WHERE id_ingredient = ? AND creation_datetime <= ?
+        """;
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, ingredientId);
+            ps.setTimestamp(2, Timestamp.from(t));
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                double stock = rs.getDouble("stock");
+                return rs.wasNull() ? 0.0 : stock;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return 0.0;
+    }
 
+    public Ingredient findIngredientByName(String name) {
+        DBConnection dbConnection = new DBConnection();
+        String sql = "SELECT id, name, price, category FROM ingredient WHERE name = ?";
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Ingredient ingredient = new Ingredient();
+                ingredient.setId(rs.getInt("id"));
+                ingredient.setName(rs.getString("name"));
+                ingredient.setPrice(rs.getDouble("price"));
+                ingredient.setCategory(CategoryEnum.valueOf(rs.getString("category")));
+                return ingredient;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
 
     private List<DishIngredient> findDishIngredientByDishId(Integer idDish) {
         DBConnection dbConnection = new DBConnection();

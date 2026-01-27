@@ -5,13 +5,13 @@ public class Dish {
 
     private Integer id;
     private String name;
-    private DishTypeEnum dishType;
+    private DishType dishType;
     private Double price;
     private List<DishIngredient> ingredients;
 
     public Dish() {}
 
-    public Dish(Integer id, String name, DishTypeEnum dishType,
+    public Dish(Integer id, String name, DishType dishType,
                 Double price, List<DishIngredient> ingredients) {
         this.id = id;
         this.name = name;
@@ -27,8 +27,8 @@ public class Dish {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public DishTypeEnum getDishType() { return dishType; }
-    public void setDishType(DishTypeEnum dishType) { this.dishType = dishType; }
+    public DishType getDishType() { return dishType; }
+    public void setDishType(DishType dishType) { this.dishType = dishType; }
 
     public Double getPrice() { return price; }
     public void setPrice(Double price) { this.price = price; }

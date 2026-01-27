@@ -4,10 +4,10 @@ import java.util.Objects;
 public class StockMovement {
     private Integer id;
     private StockValue value;
-    private MovementTypeEnum type;
+    private StockMovementType type;
     private Instant creationDateTime;
     public StockMovement() {}
-    public StockMovement(Integer id, StockValue value, MovementTypeEnum type, Instant creationDateTime) {
+    public StockMovement(Integer id, StockValue value, StockMovementType type, Instant creationDateTime) {
         this.id = id;
         this.value = value;
         this.type = type;
@@ -30,11 +30,11 @@ public class StockMovement {
         this.value = value;
     }
 
-    public MovementTypeEnum getType() {
+    public StockMovementType getType() {
         return type;
     }
 
-    public void setType(MovementTypeEnum type) {
+    public void setType(StockMovementType type) {
         this.type = type;
     }
 
