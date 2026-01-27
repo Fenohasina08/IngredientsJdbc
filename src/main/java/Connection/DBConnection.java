@@ -1,10 +1,11 @@
 package Connection;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 public class DBConnection {
-    public static Connection getDBConnection() {
+    public Connection getConnection() {
         try {
-            return DriverManager.getConnection("jdbc:postgresql://localhost:5432/mini_dish_db", "mini_dish_db_manager", "123456");
-        } catch (Exception e) { throw new RuntimeException(e); }
+            return DriverManager.getConnection(System.getenv("JDBC_URL"), System.getenv("USER"), System.getenv("PASS"));
+        } catch (SQLException e) { throw new RuntimeException(e); }
     }
 }
