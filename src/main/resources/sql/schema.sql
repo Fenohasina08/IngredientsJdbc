@@ -77,3 +77,8 @@ create table if not exists dish_order
     id_dish  int references dish (id),
     quantity int
 );
+
+ALTER TABLE "public"."order"
+    ADD COLUMN order_type VARCHAR(20),
+    ADD COLUMN status VARCHAR(20);
+

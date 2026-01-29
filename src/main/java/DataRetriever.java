@@ -127,12 +127,12 @@ public class DataRetriever {
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     """
-                            select id, id_dish, quantity from dish_order where dish_order.id_order = ?
+                            select id, dish_id, quantity from dish_order where dish_order.order_id = ?
                             """);
             preparedStatement.setInt(1, idOrder);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                Dish dish = findDishById(resultSet.getInt("id_dish"));
+                Dish dish = findDishById(resultSet.getInt("dish_id"));
                 DishOrder dishOrder = new DishOrder();
                 dishOrder.setId(resultSet.getInt("id"));
                 dishOrder.setQuantity(resultSet.getInt("quantity"));
@@ -396,7 +396,7 @@ public class DataRetriever {
                 .collect(Collectors.groupingBy(dishIngredient -> dishIngredient.getDish().getId()));
         dishIngredientsGroupByDishId.forEach((dishId, dishIngredientList) -> {
             try (PreparedStatement ps = conn.prepareStatement(
-                    "DELETE FROM dish_ingredient where id_dish = ?")) {
+                    "DELETE FROM dish_ingredient where dish_id = ?")) {
                 ps.setInt(1, dishId);
                 ps.executeUpdate(); // TODO: must be a grouped by batch
             } catch (SQLException e) {
@@ -412,7 +412,7 @@ public class DataRetriever {
             return;
         }
         String attachSql = """
-                    insert into dish_ingredient (id, id_ingredient, id_dish, required_quantity, unit)
+                    insert into dish_ingredient (id, id_ingredient, dish_id, required_quantity, unit)
                     values (?, ?, ?, ?, ?::unit)
                 """;
 
@@ -437,7 +437,7 @@ public class DataRetriever {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     """
                             select ingredient.id, ingredient.name, ingredient.price, ingredient.category, di.required_quantity, di.unit
-                            from ingredient join dish_ingredient di on di.id_ingredient = ingredient.id where id_dish = ?;
+                            from ingredient join dish_ingredient di on di.id_ingredient = ingredient.id where dish_id = ?;
                             """);
             preparedStatement.setInt(1, idDish);
             ResultSet resultSet = preparedStatement.executeQuery();
