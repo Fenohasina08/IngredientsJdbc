@@ -3,15 +3,11 @@ import java.util.Objects;
 
 public class StockMovement {
     private Integer id;
+    private MovementTypeEnum type;
+    private Instant creationDatetime;
     private StockValue value;
-    private StockMovementType type;
-    private Instant creationDateTime;
-    public StockMovement() {}
-    public StockMovement(Integer id, StockValue value, StockMovementType type, Instant creationDateTime) {
-        this.id = id;
-        this.value = value;
-        this.type = type;
-        this.creationDateTime = creationDateTime;
+
+    public StockMovement() {
     }
 
     public Integer getId() {
@@ -22,6 +18,22 @@ public class StockMovement {
         this.id = id;
     }
 
+    public MovementTypeEnum getType() {
+        return type;
+    }
+
+    public void setType(MovementTypeEnum type) {
+        this.type = type;
+    }
+
+    public Instant getCreationDatetime() {
+        return creationDatetime;
+    }
+
+    public void setCreationDatetime(Instant creationDatetime) {
+        this.creationDatetime = creationDatetime;
+    }
+
     public StockValue getValue() {
         return value;
     }
@@ -30,41 +42,24 @@ public class StockMovement {
         this.value = value;
     }
 
-    public StockMovementType getType() {
-        return type;
-    }
-
-    public void setType(StockMovementType type) {
-        this.type = type;
-    }
-
-    public Instant getCreationDateTime() {
-        return creationDateTime;
-    }
-
-    public void setCreationDateTime(Instant creationDateTime) {
-        this.creationDateTime = creationDateTime;
-    }
-
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        StockMovement that = (StockMovement) o;
-        return Objects.equals(id, that.id) && Objects.equals(value, that.value) && type == that.type && Objects.equals(creationDateTime, that.creationDateTime);
+        if (!(o instanceof StockMovement that)) return false;
+        return Objects.equals(id, that.id)  && type == that.type && Objects.equals(creationDatetime, that.creationDatetime) && Objects.equals(value, that.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, value, type, creationDateTime);
+        return Objects.hash(id, type, creationDatetime, value);
     }
 
     @Override
     public String toString() {
         return "StockMovement{" +
                 "id=" + id +
-                ", value=" + value +
                 ", type=" + type +
-                ", creationDateTime=" + creationDateTime +
+                ", creationDatetime=" + creationDatetime +
+                ", value=" + value +
                 '}';
     }
 }

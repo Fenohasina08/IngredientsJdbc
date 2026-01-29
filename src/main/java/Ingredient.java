@@ -1,26 +1,28 @@
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+
+import static java.time.Instant.now;
 
 public class Ingredient {
     private Integer id;
     private String name;
-    private Double price;
     private CategoryEnum category;
-    private List<StockMovement>  stockMovementList;
+    private Double price;
+    private List<StockMovement> stockMovementList;
 
-    public Ingredient() {}
-    public Ingredient(String name, Double price, CategoryEnum category, List<StockMovement> stockMovementList) {
-        this.name = name;
-        this.price = price;
-        this.category = category;
+    public Ingredient() {
     }
-    public Ingredient(Integer id, String name, Double price, CategoryEnum category) {
+
+    public Ingredient(Integer id, String name, CategoryEnum category, Double price, List<StockMovement> stockMovementList) {
         this.id = id;
         this.name = name;
-        this.price = price;
         this.category = category;
-
+        this.price = price;
+        this.stockMovementList = stockMovementList;
     }
 
     public Integer getId() {
@@ -39,6 +41,14 @@ public class Ingredient {
         this.name = name;
     }
 
+    public CategoryEnum getCategory() {
+        return category;
+    }
+
+    public void setCategory(CategoryEnum category) {
+        this.category = category;
+    }
+
     public Double getPrice() {
         return price;
     }
@@ -47,12 +57,11 @@ public class Ingredient {
         this.price = price;
     }
 
-    public CategoryEnum getCategory() {
-        return category;
-    }
-
-    public void setCategory(CategoryEnum category) {
-        this.category = category;
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Ingredient that = (Ingredient) o;
+        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && category == that.category && Objects.equals(price, that.price);
     }
 
     public List<StockMovement> getStockMovementList() {
@@ -63,26 +72,36 @@ public class Ingredient {
         this.stockMovementList = stockMovementList;
     }
 
-    public StockValue getStockValueAt(Instant instant){
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+    public StockValue getStockValueAt(Instant t) {
+        if (stockMovementList == null) return null;
+        Map<Unit, List<StockMovement>> unitSet = stockMovementList.stream()
+                .collect(Collectors.groupingBy(stockMovement -> stockMovement.getValue().getUnit()));
+        if (unitSet.keySet().size() > 1) {
+            throw new RuntimeException("Multiple unit found and not handle for conversion");
+        }
 
-    public void prettyPrint() {
-        System.out.println("   - ID        : " + id);
-        System.out.println("   - Catégorie : " + category);
-        System.out.println("   - Prix      : " + price + " Ar");
-    }
+        List<StockMovement> stockMovements = stockMovementList.stream()
+                .filter(stockMovement -> !stockMovement.getCreationDatetime().isAfter(t))
+                .toList();
+        double movementIn = stockMovements.stream()
+                .filter(stockMovement -> stockMovement.getType().equals(MovementTypeEnum.IN))
+                .flatMapToDouble(stockMovement -> DoubleStream.of(stockMovement.getValue().getQuantity()))
+                .sum();
+        double movementOut = stockMovements.stream()
+                .filter(stockMovement -> stockMovement.getType().equals(MovementTypeEnum.OUT))
+                .flatMapToDouble(stockMovement -> DoubleStream.of(stockMovement.getValue().getQuantity()))
+                .sum();
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Ingredient that = (Ingredient) o;
-        return id == that.id && Objects.equals(name, that.name) && Objects.equals(price, that.price) && category == that.category;
+        StockValue stockValue = new StockValue();
+        stockValue.setQuantity(movementIn - movementOut);
+        stockValue.setUnit(unitSet.keySet().stream().findFirst().get());
+
+        return stockValue;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, price, category);
+        return Objects.hash(id, name, category, price);
     }
 
     @Override
@@ -90,8 +109,9 @@ public class Ingredient {
         return "Ingredient{" +
                 "id=" + id +
                 ", name='" + name + '\'' +
-                ", price=" + price +
                 ", category=" + category +
+                ", price=" + price +
+                ", actualStock=" + getStockValueAt(now()) +
                 '}';
     }
 }

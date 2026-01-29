@@ -1,3 +1,3 @@
 public enum Unit {
-    KG,PCS,L
+    PCS, KG, L
 }
