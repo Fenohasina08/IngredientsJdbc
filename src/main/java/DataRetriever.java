@@ -1,4 +1,5 @@
 import java.sql.*;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,97 @@ public class DataRetriever {
             throw new RuntimeException("Order not found with reference " + reference);
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+    }
+    Order saveOrder(Order orderToSave) {
+        String upsertOrderSql = """
+            INSERT INTO "order" (id, reference, creation_datetime)
+            VALUES (?, ?, ?)
+            ON CONFLICT (id) DO UPDATE
+            SET reference = EXCLUDED.reference,
+                creation_datetime = EXCLUDED.creation_datetime
+            RETURNING id
+        """;
+
+        try (Connection conn = new DBConnection().getConnection()) {
+            conn.setAutoCommit(false);
+            Integer orderId;
+
+            try (PreparedStatement ps = conn.prepareStatement(upsertOrderSql)) {
+                if (orderToSave.getId() != null) {
+                    ps.setInt(1, orderToSave.getId());
+                } else {
+                    ps.setInt(1, getNextSerialValue(conn, "order", "id"));
+                }
+
+                ps.setString(2, orderToSave.getReference());
+
+                if (orderToSave.getCreationDatetime() != null) {
+                    ps.setTimestamp(3, Timestamp.from(orderToSave.getCreationDatetime()));
+                } else {
+                    ps.setTimestamp(3, Timestamp.from(Instant.now()));
+                }
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    orderId = rs.getInt(1);
+                }
+            }
+
+            List<DishOrder> newDishOrders = orderToSave.getDishOrderList();
+            detachDishOrders(conn, orderId);
+            attachDishOrders(conn, newDishOrders, orderId);
+
+            conn.commit();
+            return findOrderByReference(orderToSave.getReference());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void detachDishOrders(Connection conn, Integer orderId) throws SQLException {
+        String deleteSql = "DELETE FROM dish_order WHERE order_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(deleteSql)) {
+            ps.setInt(1, orderId);
+            ps.executeUpdate();
+        }
+    }
+
+    private void attachDishOrders(Connection conn, List<DishOrder> dishOrders, Integer orderId) throws SQLException {
+        if (dishOrders == null || dishOrders.isEmpty()) {
+            return;
+        }
+
+        String insertSql = """
+            INSERT INTO dish_order (id, order_id, dish_id, quantity)
+            VALUES (?, ?, ?, ?)
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+            for (DishOrder dishOrder : dishOrders) {
+                if (dishOrder.getId() != null) {
+                    ps.setInt(1, dishOrder.getId());
+                } else {
+                    ps.setInt(1, getNextSerialValue(conn, "dish_order", "id"));
+                }
+
+                ps.setInt(2, orderId);
+
+                if (dishOrder.getDish() != null && dishOrder.getDish().getId() != null) {
+                    ps.setInt(3, dishOrder.getDish().getId());
+                } else {
+                    throw new SQLException("Dish must have an ID in DishOrder");
+                }
+
+                if (dishOrder.getQuantity() != null) {
+                    ps.setInt(4, dishOrder.getQuantity());
+                } else {
+                    ps.setNull(4, Types.INTEGER);
+                }
+
+                ps.addBatch();
+            }
+            ps.executeBatch();
         }
     }
 
