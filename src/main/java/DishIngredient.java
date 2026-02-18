@@ -1,6 +1,4 @@
-
-
-public class DishIngredient {
+ public class DishIngredient {
     private Dish dish;
     private Ingredient ingredient;
     private Double quantity;
