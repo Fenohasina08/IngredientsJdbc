@@ -1,4 +1,4 @@
-import java.time.Instant;
+ import java.time.Instant;
 import java.util.ArrayList;
 
 public class Main {
@@ -19,27 +19,27 @@ public class Main {
 
         System.out.println("\n=== Tests des nouvelles fonctionnalités Order ===");
 
-         try {
+        try {
             Order existingOrder = dataRetriever.findOrderByReference("CMD001");
             System.out.println("Test 0 - Commande existante trouvée: " + existingOrder);
         } catch (Exception e) {
             System.out.println("Test 0 échoué: " + e.getMessage());
         }
 
-         try {
+        try {
             Order oldOrder = dataRetriever.findOrderByReference("REF_ANCIENNE");
             System.out.println("Test 1a - Commande trouvée: " + oldOrder);
             System.out.println("  orderType: " + oldOrder.getOrderType());
             System.out.println("  status: " + oldOrder.getStatus());
 
-             Order savedOldOrder = dataRetriever.saveOrder(oldOrder);
+            Order savedOldOrder = dataRetriever.saveOrder(oldOrder);
             System.out.println("Test 1b - Commande sauvegardée: " + savedOldOrder);
         } catch (Exception e) {
             System.out.println("Test 1 échoué: " + e.getMessage());
             e.printStackTrace();
         }
 
-         try {
+        try {
             Order newOrder = new Order();
             newOrder.setReference("TEST123");
             newOrder.setCreationDatetime(Instant.now());
@@ -55,7 +55,7 @@ public class Main {
             e.printStackTrace();
         }
 
-         try {
+        try {
             System.out.println("Test 3a - Recherche commande TEST123...");
             Order order = dataRetriever.findOrderByReference("TEST123");
             System.out.println("  Statut actuel: " + order.getStatus());
@@ -68,7 +68,29 @@ public class Main {
             e.printStackTrace();
         }
 
-         System.out.println("\n=== Vérification finale ===");
+        // --- Question 1 : Test du calcul de stock avec l'approche push-down ---
+        System.out.println("\n=== Question 1 : Test du calcul de stock (push-down) ===");
+        Instant now = Instant.now();
+        Integer ingredientId = 1; // Laitue
+
+        // Approche objet (existante)
+        Ingredient laitue = dataRetriever.findIngredientById(ingredientId);
+        StockValue stockObjet = laitue.getStockValueAt(now);
+        System.out.println("Stock (objet) : " + stockObjet);
+
+        // Approche push-down (nouvelle méthode dans DataRetriever retournant StockValue)
+        double stockDB = dataRetriever.getStockValueAt(ingredientId, now);
+        System.out.println("Stock (DB)    : " + stockDB);
+
+        // Comparaison
+        if (stockObjet.getQuantity().equals(stockDB.getQuantity()) &&
+                stockObjet.getUnit() == stockDB.getUnit()) {
+            System.out.println("✅ Les deux approches sont cohérentes.");
+        } else {
+            System.out.println("❌ Différence détectée !");
+        }
+
+        System.out.println("\n=== Vérification finale ===");
         String[] testRefs = {"CMD001", "CMD002", "CMD003", "REF_ANCIENNE", "TEST123"};
         for (String ref : testRefs) {
             try {

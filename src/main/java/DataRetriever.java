@@ -1,6 +1,8 @@
 import java.sql.*;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -28,6 +30,7 @@ public class DataRetriever {
             throw new RuntimeException(e);
         }
     }
+
     Order saveOrder(Order orderToSave) {
         String upsertOrderSql = """
             INSERT INTO "order" (id, reference, creation_datetime)
@@ -100,6 +103,122 @@ public class DataRetriever {
         }
     }
 
+    public Double getDishCost(Integer dishId) {
+        String sql = """
+        SELECT COALESCE(SUM(i.price * di.required_quantity), 0) AS total_cost
+        FROM dish_ingredient di
+        JOIN ingredient i ON di.id_ingredient = i.id
+        WHERE di.id_dish = ?
+        """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, dishId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("total_cost");
+                } else {
+                     return 0.0;
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du calcul du coût du plat " + dishId, e);
+        }
+    }
+
+    public Double getGrossMargin(Integer dishId) {
+        String sql = """
+        SELECT d.selling_price - COALESCE(SUM(i.price * di.required_quantity), 0) AS gross_margin
+        FROM dish d
+        LEFT JOIN dish_ingredient di ON d.id = di.id_dish
+        LEFT JOIN ingredient i ON di.id_ingredient = i.id
+        WHERE d.id = ?
+        GROUP BY d.id, d.selling_price
+        """;
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, dishId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    double margin = rs.getDouble("gross_margin");
+                     if (rs.wasNull()) {
+                        return null;
+                    }
+                    return margin;
+                } else {
+                     throw new RuntimeException("Plat non trouvé avec l'ID " + dishId);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du calcul de la marge pour le plat " + dishId, e);
+        }
+    }
+    public Map<Integer, Map<LocalDate, Double>> getStockEvolution(String periodicity, LocalDate startDate, LocalDate endDate) {
+         String interval;
+        switch (periodicity.toUpperCase()) {
+            case "DAY":
+                interval = "1 day";
+                break;
+            case "WEEK":
+                interval = "1 week";
+                break;
+            case "MONTH":
+                interval = "1 month";
+                break;
+            default:
+                throw new IllegalArgumentException("Périodicité invalide : " + periodicity);
+        }
+
+         String sql = """
+            WITH dates AS (
+                SELECT generate_series(?::date, ?::date, ?::interval) AS period_date
+            )
+            SELECT 
+                i.id AS ingredient_id,
+                i.name AS ingredient_name,
+                d.period_date,
+                COALESCE((
+                    SELECT SUM(CASE WHEN sm.type = 'OUT' THEN -sm.quantity ELSE sm.quantity END)
+                    FROM stock_movement sm
+                    WHERE sm.id_ingredient = i.id
+                      AND sm.creation_datetime <= d.period_date + interval '1 day' - interval '1 second'
+                ), 0) AS stock
+            FROM ingredient i
+            CROSS JOIN dates d
+            ORDER BY i.id, d.period_date
+            """;
+
+        Map<Integer, Map<LocalDate, Double>> result = new LinkedHashMap<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setDate(1, Date.valueOf(startDate));
+            ps.setDate(2, Date.valueOf(endDate));
+            ps.setString(3, interval);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int ingredientId = rs.getInt("ingredient_id");
+                    LocalDate date = rs.getDate("period_date").toLocalDate();
+                    double stock = rs.getDouble("stock");
+
+                     result.computeIfAbsent(ingredientId, k -> new LinkedHashMap<>())
+                            .put(date, stock);
+                }
+
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Erreur lors du calcul de l'évolution du stock", e);
+        }
+
+        return result;
+    }
     private void detachDishOrders(Connection conn, Integer orderId) throws SQLException {
         String deleteSql = "DELETE FROM dish_order WHERE order_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(deleteSql)) {
